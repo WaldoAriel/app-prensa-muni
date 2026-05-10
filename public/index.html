@@ -1,113 +1,188 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Prensa Muni - Subir Fotos</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f0f0f0;
-        }
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        .progreso {
-            background: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        img {
-            max-width: 100px;
-            margin: 5px;
-            border-radius: 5px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f0f0f0;
+      }
+      .card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      input,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .progreso {
+        background: #f0f0f0;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+      }
+      img {
+        max-width: 100px;
+        margin: 5px;
+        border-radius: 5px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="card">
-        <h1>📸 Subir Fotos</h1>
-        <input type="file" id="selector" multiple accept="image/*">
-        <button onclick="subirFotos()">🚀 Subir fotos</button>
-        <div id="progreso" class="progreso"></div>
+      <h1>📸 Subir Fotos</h1>
+
+      <!-- Selector de Área -->
+      <label>🏢 Área:</label>
+      <select id="area">
+        <option value="">Seleccionar área...</option>
+        <option value="Obras">🚧 Obras Públicas</option>
+        <option value="Cultura">🎭 Cultura</option>
+        <option value="Turismo">🌊 Turismo</option>
+        <option value="Intendencia">🏛️ Intendencia</option>
+        <option value="Deportes">⚽ Deportes</option>
+        <option value="Educacion">📚 Educación</option>
+        <option value="Salud">🏥 Salud</option>
+        <option value="Ambiente">🌱 Ambiente</option>
+      </select>
+
+      <!-- Descripción del evento -->
+      <label>📝 Descripción del evento:</label>
+      <input
+        type="text"
+        id="descripcion"
+        placeholder="Ej: Bacheo calle Corrientes, Concierto en plaza, etc."
+      />
+
+      <!-- Selector de archivos -->
+      <label>🖼️ Seleccionar fotos/videos:</label>
+      <input type="file" id="selector" multiple accept="image/*,video/*" />
+
+      <!-- Botón de subida -->
+      <button onclick="subirFotos()">🚀 Subir archivos</button>
+
+      <!-- Barra de progreso -->
+      <div class="progreso">
+        <div
+          id="barra"
+          style="
+            width: 0%;
+            height: 20px;
+            background: #007bff;
+            border-radius: 5px;
+            transition: width 0.3s;
+          "
+        ></div>
+      </div>
+      <div id="estado"></div>
     </div>
 
     <div class="card">
-        <h2>📁 Fotos subidas</h2>
-        <div id="galeria"></div>
+      <h2>📁 Fotos subidas</h2>
+      <div id="galeria"></div>
     </div>
 
     <script>
-        async function subirFotos() {
-            const archivos = document.getElementById('selector').files;
-            if (archivos.length === 0) {
-                alert('Seleccioná al menos una foto');
-                return;
-            }
+      async function subirFotos() {
+        const archivos = document.getElementById("selector").files;
+        const area = document.getElementById("area").value;
+        const descripcion = document.getElementById("descripcion").value;
 
-            const formData = new FormData();
-            for (let i = 0; i < archivos.length; i++) {
-                formData.append('fotos', archivos[i]);
-            }
-
-            const progresoDiv = document.getElementById('progreso');
-            progresoDiv.innerHTML = '📤 Subiendo...';
-
-            try {
-                const respuesta = await fetch('/subir', {
-                    method: 'POST',
-                    body: formData
-                });
-                const datos = await respuesta.json();
-                progresoDiv.innerHTML = `✅ ${datos.mensaje}`;
-                cargarGaleria();  // Actualizar galería
-                document.getElementById('selector').value = '';  // Limpiar selector
-            } catch (error) {
-                progresoDiv.innerHTML = '❌ Error al subir: ' + error.message;
-            }
+        // Validaciones
+        if (archivos.length === 0) {
+          alert("📸 Seleccioná al menos una foto o video");
+          return;
+        }
+        if (!area) {
+          alert("🏢 Seleccioná un área");
+          return;
+        }
+        if (!descripcion.trim()) {
+          alert("📝 Escribí una descripción del evento");
+          return;
         }
 
-        async function cargarGaleria() {
-            const respuesta = await fetch('/fotos');
-            const datos = await respuesta.json();
-            const galeria = document.getElementById('galeria');
-            
-            if (datos.fotos.length === 0) {
-                galeria.innerHTML = '<p>Todavía no hay fotos subidas</p>';
-                return;
-            }
+        const formData = new FormData();
+        for (let i = 0; i < archivos.length; i++) {
+          formData.append("fotos", archivos[i]);
+        }
+        formData.append("area", area);
+        formData.append("descripcion", descripcion);
 
-            galeria.innerHTML = datos.fotos.map(foto => 
-                `<img src="/uploads/${foto}" alt="${foto}" title="${foto}">`
-            ).join('');
+        const barra = document.getElementById("barra");
+        const estadoDiv = document.getElementById("estado");
+        estadoDiv.innerHTML = "📤 Subiendo...";
+        barra.style.width = "0%";
+
+        try {
+          const respuesta = await fetch("/subir", {
+            method: "POST",
+            body: formData,
+          });
+
+          const datos = await respuesta.json();
+
+          if (respuesta.ok) {
+            barra.style.width = "100%";
+            estadoDiv.innerHTML = `✅ ${datos.mensaje}`;
+            cargarGaleria();
+            document.getElementById("selector").value = "";
+            document.getElementById("descripcion").value = "";
+            document.getElementById("area").value = "";
+
+            // Reiniciar barra después de 2 segundos
+            setTimeout(() => {
+              barra.style.width = "0%";
+            }, 2000);
+          } else {
+            estadoDiv.innerHTML = `❌ Error: ${datos.error}`;
+          }
+        } catch (error) {
+          estadoDiv.innerHTML = "❌ Error al subir: " + error.message;
+        }
+      }
+
+      async function cargarGaleria() {
+        const respuesta = await fetch("/fotos");
+        const datos = await respuesta.json();
+        const galeria = document.getElementById("galeria");
+
+        if (datos.fotos.length === 0) {
+          galeria.innerHTML = "<p>Todavía no hay fotos subidas</p>";
+          return;
         }
 
-        // Cargar galería al abrir la página
-        cargarGaleria();
+        galeria.innerHTML = datos.fotos
+          .map(
+            (foto) =>
+              `<img src="/uploads/${foto}" alt="${foto}" title="${foto}">`,
+          )
+          .join("");
+      }
+
+      // Cargar galería al abrir la página
+      cargarGaleria();
     </script>
-</body>
+  </body>
 </html>
