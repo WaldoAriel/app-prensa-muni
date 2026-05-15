@@ -9,7 +9,9 @@ import {
   Box,
   Alert,
   CircularProgress,
+  alpha,
 } from "@mui/material";
+import { Waves, Login as LoginIcon } from "@mui/icons-material";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -42,12 +44,39 @@ const Login = () => {
           justifyContent: "center",
         }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: "100%" }}>
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h3" component="h1">
+        <Paper
+          elevation={24}
+          sx={{
+            p: 5,
+            width: "100%",
+            background: "linear-gradient(135deg, #ffffff 0%, #f8faff 100%)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* Decoración ballena */}
+          <Box
+            sx={{ position: "absolute", top: -20, right: -20, opacity: 0.1 }}
+          >
+            <Waves sx={{ fontSize: 150 }} />
+          </Box>
+
+          <Box sx={{ textAlign: "center", mb: 4 }}>
+            <Typography
+              variant="h1"
+              component="h1"
+              sx={{
+                fontSize: "4rem",
+                background: "linear-gradient(135deg, #1a5276 0%, #2e86c1 100%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+                mb: 1,
+              }}
+            >
               🐋
             </Typography>
-            <Typography variant="h4" gutterBottom>
+            <Typography variant="h4" gutterBottom fontWeight={700}>
               Prensa Muni
             </Typography>
             <Typography variant="body2" color="textSecondary">
@@ -65,6 +94,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoFocus
+              variant="outlined"
             />
 
             <TextField
@@ -75,10 +105,11 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              variant="outlined"
             />
 
             {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
+              <Alert severity="error" sx={{ mt: 2, borderRadius: 3 }}>
                 {error}
               </Alert>
             )}
@@ -89,12 +120,23 @@ const Login = () => {
               variant="contained"
               color="primary"
               size="large"
-              sx={{ mt: 3 }}
+              startIcon={
+                cargando ? <CircularProgress size={20} /> : <LoginIcon />
+              }
               disabled={cargando}
+              sx={{ mt: 3, py: 1.5 }}
             >
-              {cargando ? <CircularProgress size={24} /> : "Ingresar"}
+              {cargando ? "Ingresando..." : "Ingresar al Sistema"}
             </Button>
           </form>
+
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ mt: 3, display: "block", textAlign: "center" }}
+          >
+            Sistema exclusivo para personal de prensa
+          </Typography>
         </Paper>
       </Box>
     </Container>

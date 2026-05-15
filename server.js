@@ -89,10 +89,14 @@ function limpiarTexto(texto) {
 function generarNombreYRuta(area, descripcion, correlativo, extension, fecha) {
   const areaLimpia = limpiarTexto(area);
   const descLimpia = limpiarTexto(descripcion);
+
   const fechaStr = `${fecha.getFullYear()}${String(fecha.getMonth() + 1).padStart(2, "0")}${String(fecha.getDate()).padStart(2, "0")}`;
+
   const anio = fecha.getFullYear();
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
   const dia = String(fecha.getDate()).padStart(2, "0");
+
+  // 👈 ORDEN CORRECTO: AREA/AÑO/MES/DIA
   const carpetaBase = path.join("uploads", areaLimpia, String(anio), mes, dia);
 
   if (!fs.existsSync(carpetaBase)) {
@@ -108,11 +112,14 @@ function generarNombreYRuta(area, descripcion, correlativo, extension, fecha) {
     nombreArchivo = `${fechaStr}_${areaLimpia}_${descLimpia}_${String(num).padStart(3, "0")}${extension}`;
   }
 
-  return {
-    rutaCompleta: path.join(carpetaBase, nombreArchivo),
-    nombreArchivo,
-    carpetaBase,
-  };
+  const rutaCompleta = path.join(carpetaBase, nombreArchivo);
+
+  // 👈 Guardar la ruta RELATIVA para la base de datos (sin "uploads/")
+  const rutaRelativa = path
+    .join(areaLimpia, String(anio), mes, dia, nombreArchivo)
+    .replace(/\\/g, "/");
+
+  return { rutaCompleta, nombreArchivo, carpetaBase, rutaRelativa };
 }
 
 // ========== MIDDLEWARE DE AUTENTICACIÓN ==========
@@ -197,7 +204,7 @@ app.post("/subir", verificarToken, upload.array("fotos"), async (req, res) => {
 
     for (const archivo of archivos) {
       const extension = path.extname(archivo.originalname);
-      const { rutaCompleta, nombreArchivo } = generarNombreYRuta(
+      const { rutaCompleta, nombreArchivo, rutaRelativa } = generarNombreYRuta(
         area,
         descripcion,
         correlativo,
@@ -205,7 +212,7 @@ app.post("/subir", verificarToken, upload.array("fotos"), async (req, res) => {
         fechaActual,
       );
       fs.writeFileSync(rutaCompleta, archivo.buffer);
-      resultados.push(nombreArchivo);
+      resultados.push(rutaRelativa);
       correlativo++;
     }
 
@@ -275,6 +282,133 @@ Subida.belongsTo(Usuario, { foreignKey: "usuario_id" });
 
 // ========== SINCRONIZAR BD Y ARRANCAR ==========
 await sequelize.sync({ alter: true });
+
+// ========== ADMIN: Obtener todos los usuarios ==========
+app.get('/admin/usuarios', verificarToken, async (req, res) => {
+  try {
+    // Solo admins pueden ver la lista
+    if (req.usuario.rol !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol admin.' });
+    }
+    
+    const usuarios = await Usuario.findAll({
+      attributes: ['id', 'nombre', 'email', 'rol', 'activo', 'created_at'],
+      order: [['created_at', 'DESC']]
+    });
+    res.json({ usuarios });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener usuarios' });
+  }
+});
+
+// ========== ADMIN: Crear usuario ==========
+app.post('/admin/usuarios', verificarToken, async (req, res) => {
+  try {
+    if (req.usuario.rol !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    
+    const { nombre, email, password, rol } = req.body;
+    
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+    
+    // Verificar si ya existe
+    const existe = await Usuario.findOne({ where: { email } });
+    if (existe) {
+      return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
+    }
+    
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    
+    const nuevoUsuario = await Usuario.create({
+      nombre,
+      email,
+      password: hashedPassword,
+      rol: rol || 'campo',
+      activo: true
+    });
+    
+    res.json({
+      mensaje: 'Usuario creado exitosamente',
+      usuario: {
+        id: nuevoUsuario.id,
+        nombre: nuevoUsuario.nombre,
+        email: nuevoUsuario.email,
+        rol: nuevoUsuario.rol,
+        activo: nuevoUsuario.activo
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al crear usuario' });
+  }
+});
+
+// ========== ADMIN: Actualizar usuario ==========
+app.put('/admin/usuarios/:id', verificarToken, async (req, res) => {
+  try {
+    if (req.usuario.rol !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    
+    const { id } = req.params;
+    const { nombre, email, rol, activo, password } = req.body;
+    
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    if (nombre) usuario.nombre = nombre;
+    if (email) usuario.email = email;
+    if (rol) usuario.rol = rol;
+    if (activo !== undefined) usuario.activo = activo;
+    if (password) usuario.password = bcrypt.hashSync(password, 10);
+    
+    await usuario.save();
+    
+    res.json({
+      mensaje: 'Usuario actualizado',
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol,
+        activo: usuario.activo
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar usuario' });
+  }
+});
+
+// ========== ADMIN: Eliminar usuario ==========
+app.delete('/admin/usuarios/:id', verificarToken, async (req, res) => {
+  try {
+    if (req.usuario.rol !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    
+    const { id } = req.params;
+    
+    // No permitir eliminarse a sí mismo
+    if (parseInt(id) === req.usuario.id) {
+      return res.status(400).json({ error: 'No puedes eliminarte a vos' });
+    }
+    
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    await usuario.destroy();
+    res.json({ mensaje: 'Usuario eliminado' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar usuario' });
+  }
+});
 app.listen(PORT, () => {
   console.log(`
     🐋 Servidor de Prensa Municipal funcionando!

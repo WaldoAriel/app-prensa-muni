@@ -14,6 +14,10 @@ import Subir from "./pages/Subir";
 import Navbar from "./components/Navbar";
 import { contarPendientes } from "./utils/db";
 import api from "./services/api";
+import Historial from "./pages/Historial";
+import { Alert, Typography } from "@mui/material";
+import Galeria from "./pages/Galeria";
+import AdminUsuarios from "./pages/AdminUsuarios";
 
 // Tema personalizado de Material UI
 const theme = createTheme({
@@ -39,7 +43,7 @@ const Dashboard = () => {
   const [galeria, setGaleria] = useState([]);
   const [pendientesCount, setPendientesCount] = useState(0);
   const [cargandoGaleria, setCargandoGaleria] = useState(false);
-  const { token } = useAuth();
+  const { token, usuario } = useAuth();
 
   const actualizarContadorPendientes = async () => {
     const count = await contarPendientes();
@@ -90,7 +94,7 @@ const Dashboard = () => {
         setSeccion={setSeccion}
         pendientesCount={pendientesCount}
       />
-      <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
+      <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }} className="fade-in-up">
         {seccion === "subir" && (
           <Subir
             onSubidaExitosa={handleSubidaExitosa}
@@ -98,93 +102,11 @@ const Dashboard = () => {
           />
         )}
 
-        {seccion === "galeria" && (
-          <div>
-            <h2>📁 Galería de Medios</h2>
-            {cargandoGaleria ? (
-              <Box display="flex" justifyContent="center" my={4}>
-                <CircularProgress />
-              </Box>
-            ) : galeria.length === 0 ? (
-              <p>No hay fotos o videos subidos aún.</p>
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-                  gap: "10px",
-                  marginTop: "20px",
-                }}
-              >
-                {galeria.map((foto, i) => {
-                  const esVideo = foto.match(/\.(mp4|webm|mov)$/i);
-                  const ruta = `/api/uploads/${foto}`;
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        border: "1px solid #ddd",
-                        borderRadius: "8px",
-                        overflow: "hidden",
-                        background: "#fff",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {esVideo ? (
-                        <video
-                          src={ruta}
-                          style={{
-                            width: "100%",
-                            height: "120px",
-                            objectFit: "cover",
-                          }}
-                          controls
-                        />
-                      ) : (
-                        <img
-                          src={ruta}
-                          alt={foto}
-                          style={{
-                            width: "100%",
-                            height: "120px",
-                            objectFit: "cover",
-                          }}
-                          onClick={() => window.open(ruta, "_blank")}
-                        />
-                      )}
-                      <div
-                        style={{
-                          fontSize: "10px",
-                          padding: "4px",
-                          textAlign: "center",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {foto.split("/").pop()}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        {seccion === "galeria" && <Galeria />}
 
-        {seccion === "historial" && (
-          <div>
-            <h2>📋 Historial de Subidas</h2>
-            <p>
-              Próximamente: Historial detallado de todas las subidas con filtros
-              por fecha, área y usuario.
-            </p>
-            <p>
-              💡 Los datos ya se están registrando en la base de datos. Pronto
-              tendremos el panel de historial completo.
-            </p>
-          </div>
-        )}
+        {seccion === "historial" && <Historial />}
+
+        {seccion === "admin" && usuario?.rol === "admin" && <AdminUsuarios />}
       </Container>
     </>
   );

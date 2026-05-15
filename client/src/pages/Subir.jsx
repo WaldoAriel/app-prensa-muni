@@ -20,6 +20,7 @@ import {
   ListItemIcon,
   IconButton,
   Divider,
+  Chip,
 } from "@mui/material";
 import {
   Delete,
@@ -27,6 +28,9 @@ import {
   CloudOff,
   Sync,
   CheckCircle,
+  Warning,
+  Image,
+  Videocam,
 } from "@mui/icons-material";
 import {
   guardarPendiente,
@@ -59,20 +63,17 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
   const [sincronizando, setSincronizando] = useState(false);
   const { token } = useAuth();
 
-  // Detectar si hay internet
   const hayInternet = navigator.onLine;
 
-  // Cargar pendientes al iniciar
   useEffect(() => {
     cargarPendientes();
   }, []);
 
-  // Escuchar cambios en la conexión
   useEffect(() => {
     const handleOnline = () => {
       setMensaje({
         type: "info",
-        text: "🟢 Conexión restablecida. Podés sincronizar los archivos pendientes.",
+        text: "🟢 Conexión restablecida. ¡Usá el botón Sincronizar!",
       });
       setTimeout(() => setMensaje(null), 3000);
       cargarPendientes();
@@ -80,7 +81,7 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
     const handleOffline = () => {
       setMensaje({
         type: "warning",
-        text: "🔴 Sin conexión. Los archivos se guardarán localmente.",
+        text: "🔴 Sin conexión. Las fotos se guardarán localmente.",
       });
       setTimeout(() => setMensaje(null), 3000);
     };
@@ -112,7 +113,6 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
     setArchivos(nuevosArchivos);
   };
 
-  // Subida normal (con internet)
   const subirNormal = async () => {
     if (!area || !descripcion || archivos.length === 0) {
       setMensaje({ type: "error", text: "Completá todos los campos" });
@@ -146,7 +146,6 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
 
       setTimeout(() => setMensaje(null), 3000);
     } catch (error) {
-      console.error("Error:", error);
       setMensaje({
         type: "error",
         text: error.response?.data?.error || "Error al subir",
@@ -157,7 +156,6 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
     }
   };
 
-  // Guardar localmente (offline)
   const guardarLocal = async () => {
     if (!area || !descripcion || archivos.length === 0) {
       setMensaje({ type: "error", text: "Completá todos los campos" });
@@ -166,17 +164,16 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
 
     setSubiendo(true);
     try {
-      const guardados = await guardarPendiente(area, descripcion, archivos);
+      await guardarPendiente(area, descripcion, archivos);
       setMensaje({
         type: "success",
-        text: `📦 ${archivos.length} archivo(s) guardados localmente. Se sincronizarán cuando haya conexión.`,
+        text: `📦 ${archivos.length} archivo(s) guardados localmente. Usá el botón Sincronizar cuando vuelvas a la oficina.`,
       });
       setArchivos([]);
       setArea("");
       setDescripcion("");
       await cargarPendientes();
     } catch (error) {
-      console.error("Error guardando local:", error);
       setMensaje({
         type: "error",
         text: "Error al guardar localmente: " + error.message,
@@ -186,15 +183,17 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
     }
   };
 
-  // Sincronizar pendientes con el servidor
   const sincronizarPendientes = async () => {
     if (pendientes.length === 0) return;
 
     setSincronizando(true);
     let exitosos = 0;
     let fallidos = 0;
+    let actual = 0;
+    const total = pendientes.length;
 
     for (const p of pendientes) {
+      actual++;
       const formData = new FormData();
       formData.append("fotos", p.archivo);
       formData.append("area", p.area);
@@ -206,8 +205,12 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
         });
         await eliminarPendiente(p.id);
         exitosos++;
+        setMensaje({
+          type: "info",
+          text: `Sincronizando: ${actual} de ${total}...`,
+        });
       } catch (error) {
-        console.error("Error sincronizando:", p.nombreOriginal, error);
+        console.error("Error:", p.nombreOriginal, error);
         fallidos++;
       }
     }
@@ -215,25 +218,36 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
     await cargarPendientes();
 
     let mensajeText = "";
+    let tipo = "success";
     if (exitosos > 0 && fallidos === 0) {
       mensajeText = `✅ ¡Sincronización completa! ${exitosos} archivo(s) subidos.`;
     } else if (exitosos > 0 && fallidos > 0) {
       mensajeText = `⚠️ Parcial: ${exitosos} subidos, ${fallidos} fallidos.`;
+      tipo = "warning";
     } else {
       mensajeText = `❌ Error: No se pudo sincronizar (${fallidos} fallidos).`;
+      tipo = "error";
     }
 
-    setMensaje({ type: exitosos > 0 ? "success" : "error", text: mensajeText });
+    setMensaje({ type: tipo, text: mensajeText });
     if (exitosos > 0 && onSubidaExitosa) onSubidaExitosa();
     setSincronizando(false);
     setTimeout(() => setMensaje(null), 4000);
   };
 
   const eliminarPendienteLocal = async (id, nombre) => {
-    await eliminarPendiente(id);
-    await cargarPendientes();
-    setMensaje({ type: "info", text: `🗑️ Eliminado: ${nombre}` });
-    setTimeout(() => setMensaje(null), 2000);
+    if (confirm(`¿Eliminar "${nombre}" de la lista de pendientes?`)) {
+      await eliminarPendiente(id);
+      await cargarPendientes();
+      setMensaje({ type: "info", text: `🗑️ Eliminado: ${nombre}` });
+      setTimeout(() => setMensaje(null), 2000);
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
   return (
@@ -252,69 +266,69 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
         </Alert>
       )}
 
-      {!hayInternet && (
-        <Alert severity="warning" icon={<CloudOff />} sx={{ mb: 2 }}>
-          📴 Sin conexión a internet. Los archivos se guardarán localmente y se
-          sincronizarán cuando vuelvas a la oficina.
-        </Alert>
-      )}
+      {/* ===== INDICADOR DE CONEXIÓN ===== */}
+      <Box sx={{ mb: 2 }}>
+        {hayInternet ? (
+          <Chip
+            icon={<CloudUpload />}
+            label="Conectado al servidor"
+            color="success"
+            size="small"
+          />
+        ) : (
+          <Chip
+            icon={<CloudOff />}
+            label="Sin conexión - Modo offline"
+            color="error"
+            size="small"
+          />
+        )}
+      </Box>
 
-      {hayInternet && pendientes.length > 0 && (
-        <Card sx={{ mb: 3, bgcolor: "#fff8e1" }}>
+      {/* ===== PANEL DE PENDIENTES (solo el botón arriba, la lista abajo) ===== */}
+      {pendientes.length > 0 && (
+        <Card sx={{ mb: 3, border: "2px solid #ff9800", bgcolor: "#fff8e1" }}>
           <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              📦 <strong>{pendientes.length}</strong> archivo(s) pendiente(s) de
-              sincronización
-            </Typography>
-            <List dense>
-              {pendientes.slice(0, 5).map((p) => (
-                <ListItem
-                  key={p.id}
-                  secondaryAction={
-                    <IconButton
-                      edge="end"
-                      onClick={() =>
-                        eliminarPendienteLocal(p.id, p.nombreOriginal)
-                      }
-                    >
-                      <Delete />
-                    </IconButton>
-                  }
-                >
-                  <ListItemIcon>
-                    <CloudOff color="warning" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={p.nombreOriginal}
-                    secondary={`${p.area} - ${p.descripcion}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-            {pendientes.length > 5 && (
-              <Typography variant="caption" color="textSecondary">
-                ... y {pendientes.length - 5} más
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <CloudOff color="warning" />
+              <Typography variant="subtitle1">
+                📦 {pendientes.length} archivo(s) pendiente(s) de sincronización
               </Typography>
-            )}
+            </Box>
+
             <Button
               variant="contained"
               color="warning"
-              startIcon={<Sync />}
+              size="large"
+              startIcon={
+                sincronizando ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <Sync />
+                )
+              }
               onClick={sincronizarPendientes}
               disabled={sincronizando}
               fullWidth
-              sx={{ mt: 2 }}
+              sx={{ py: 1.5, fontSize: "1rem" }}
             >
-              {sincronizando ? (
-                <CircularProgress size={24} />
-              ) : (
-                `Sincronizar ${pendientes.length} archivos`
-              )}
+              {sincronizando
+                ? "Sincronizando..."
+                : `🚀 SINCRONIZAR ${pendientes.length} ARCHIVOS`}
             </Button>
+
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              sx={{ mt: 1, display: "block", textAlign: "center" }}
+            >
+              💡 Conectá el celular al WiFi de la oficina y presioná este botón
+            </Typography>
           </CardContent>
         </Card>
       )}
 
+      {/* ===== FORMULARIO DE SUBIDA ===== */}
       <FormControl fullWidth sx={{ mb: 2 }}>
         <InputLabel>Área</InputLabel>
         <Select
@@ -386,7 +400,7 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
                 </ListItemIcon>
                 <ListItemText
                   primary={f.name}
-                  secondary={`${(f.size / 1024 / 1024).toFixed(2)} MB`}
+                  secondary={formatFileSize(f.size)}
                 />
               </ListItem>
             ))}
@@ -432,8 +446,55 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
       {!hayInternet && pendientes.length === 0 && archivos.length === 0 && (
         <Alert severity="info" sx={{ mt: 2 }}>
           💡 Modo offline activado. Las futuras subidas se guardarán localmente
-          y se sincronizarán automáticamente cuando vuelva la conexión.
+          y aparecerán en el panel de pendientes.
         </Alert>
+      )}
+
+      {/* ===== LISTA DETALLADA DE PENDIENTES (ahora abajo) ===== */}
+      {pendientes.length > 0 && (
+        <Card sx={{ mt: 3, bgcolor: "#fafafa" }}>
+          <CardContent>
+            <Typography variant="subtitle2" gutterBottom>
+              📋 Detalle de archivos pendientes:
+            </Typography>
+            <List dense sx={{ maxHeight: 300, overflow: "auto" }}>
+              {pendientes.map((p) => (
+                <ListItem key={p.id} divider>
+                  <ListItemIcon>
+                    {p.tipo?.startsWith("image/") ? (
+                      <Image color="primary" />
+                    ) : (
+                      <Videocam color="secondary" />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={p.nombreOriginal}
+                    secondary={
+                      <Box
+                        component="span"
+                        sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}
+                      >
+                        <Chip label={p.area} size="small" variant="outlined" />
+                        <span>{p.descripcion}</span>
+                        <span style={{ color: "#666" }}>
+                          {formatFileSize(p.tamaño)}
+                        </span>
+                      </Box>
+                    }
+                  />
+                  <IconButton
+                    edge="end"
+                    onClick={() =>
+                      eliminarPendienteLocal(p.id, p.nombreOriginal)
+                    }
+                  >
+                    <Delete />
+                  </IconButton>
+                </ListItem>
+              ))}
+            </List>
+          </CardContent>
+        </Card>
       )}
     </Paper>
   );
