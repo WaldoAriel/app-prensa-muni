@@ -6,38 +6,28 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: "Poppins", "Roboto", "Arial", sans-serif;
-  background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
-  background-attachment: fixed;
-  min-height: 100vh;
-}
-
-/* Scrollbar personalizada */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #e0e0e0;
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a5276;
-  border-radius: 4px;
+  background: #B0BEC5;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0e2f44;
+  background: #78909C;
 }
 
-/* Animaciones */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -46,5 +36,5 @@ body {
 }
 
 .fade-in-up {
-  animation: fadeInUp 0.4s ease-out;
+  animation: fadeInUp 0.3s ease-out;
 }

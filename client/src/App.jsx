@@ -3,8 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import {
   Container,
   CssBaseline,
-  ThemeProvider,
-  createTheme,
   CircularProgress,
   Box,
 } from "@mui/material";
@@ -15,34 +13,12 @@ import Navbar from "./components/Navbar";
 import { contarPendientes } from "./utils/db";
 import api from "./services/api";
 import Historial from "./pages/Historial";
-import { Alert, Typography } from "@mui/material";
 import Galeria from "./pages/Galeria";
 import AdminUsuarios from "./pages/AdminUsuarios";
 
-// Tema personalizado de Material UI
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#007bff",
-    },
-    secondary: {
-      main: "#6c757d",
-    },
-    background: {
-      default: "#f5f5f5",
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Arial", sans-serif',
-  },
-});
-
-// Componente del Dashboard (pantalla principal después del login)
 const Dashboard = () => {
   const [seccion, setSeccion] = useState("subir");
-  const [galeria, setGaleria] = useState([]);
   const [pendientesCount, setPendientesCount] = useState(0);
-  const [cargandoGaleria, setCargandoGaleria] = useState(false);
   const { token, usuario } = useAuth();
 
   const actualizarContadorPendientes = async () => {
@@ -50,30 +26,6 @@ const Dashboard = () => {
     setPendientesCount(count);
   };
 
-  const cargarGaleria = async () => {
-    if (!token) return;
-
-    setCargandoGaleria(true);
-    try {
-      const response = await api.get("/fotos");
-      // Mostrar las últimas 30 fotos
-      const ultimasFotos = response.data.fotos?.slice(-30) || [];
-      setGaleria(ultimasFotos);
-    } catch (error) {
-      console.error("Error al cargar galería:", error);
-    } finally {
-      setCargandoGaleria(false);
-    }
-  };
-
-  // Cargar galería al montar el componente y cuando cambia la sección
-  useEffect(() => {
-    if (token && seccion === "galeria") {
-      cargarGaleria();
-    }
-  }, [token, seccion]);
-
-  // Actualizar contador de pendientes periódicamente
   useEffect(() => {
     if (token) {
       actualizarContadorPendientes();
@@ -83,7 +35,6 @@ const Dashboard = () => {
   }, [token]);
 
   const handleSubidaExitosa = () => {
-    cargarGaleria();
     actualizarContadorPendientes();
   };
 
@@ -101,18 +52,14 @@ const Dashboard = () => {
             actualizarContador={actualizarContadorPendientes}
           />
         )}
-
         {seccion === "galeria" && <Galeria />}
-
         {seccion === "historial" && <Historial />}
-
         {seccion === "admin" && usuario?.rol === "admin" && <AdminUsuarios />}
       </Container>
     </>
   );
 };
 
-// Componente que maneja las rutas según autenticación
 const AppRoutes = () => {
   const { token, cargando } = useAuth();
 
@@ -124,9 +71,9 @@ const AppRoutes = () => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          bgcolor: "background.default",
         }}
       >
-        {" "}
         <CircularProgress />
       </Box>
     );
@@ -143,17 +90,16 @@ const AppRoutes = () => {
   );
 };
 
-// Componente principal
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <>
       <CssBaseline />
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
-    </ThemeProvider>
+    </>
   );
 }
 

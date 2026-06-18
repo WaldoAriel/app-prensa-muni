@@ -21,7 +21,7 @@ export const initDB = async () => {
 };
 
 // Guardar una subida pendiente
-export const guardarPendiente = async (area, descripcion, archivos) => {
+export const guardarPendiente = async (area, descripcion, contextoRedes, archivos) => {
   const db = await initDB();
   const timestamp = Date.now();
   
@@ -31,7 +31,8 @@ export const guardarPendiente = async (area, descripcion, archivos) => {
     const id = await db.add(STORE_NAME, {
       area,
       descripcion,
-      archivo: archivo, // El objeto File
+      contexto_redes: contextoRedes,
+      archivo: archivo,
       nombreOriginal: archivo.name,
       tipo: archivo.type,
       tamaño: archivo.size,

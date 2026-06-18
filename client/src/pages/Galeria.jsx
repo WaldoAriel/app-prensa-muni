@@ -17,8 +17,8 @@ import {
   DialogContent,
   ToggleButton,
   ToggleButtonGroup,
-  Breadcrumbs,
-  Link,
+  Stack,
+  Badge,
 } from "@mui/material";
 import {
   Search,
@@ -26,6 +26,8 @@ import {
   GridView,
   ViewList,
   Close,
+  PhotoLibrary,
+  CalendarMonth,
   FolderOpen,
 } from "@mui/icons-material";
 import api from "../services/api";
@@ -39,27 +41,41 @@ const Galeria = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados de filtros
   const [filtroArea, setFiltroArea] = useState("todas");
   const [filtroMes, setFiltroMes] = useState("todos");
   const [filtroDia, setFiltroDia] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [vista, setVista] = useState("grid");
 
-  // Modal
   const [imagenSeleccionada, setImagenSeleccionada] = useState(null);
 
-  // Extraer áreas, meses y días disponibles
+  const formatAreaLabel = (area) => {
+    const labels = {
+      todas: "Todas",
+      obras_publicas: "Obras públicas",
+      obras_privadas: "Obras privadas",
+      dispo: "DISPO",
+      turismo_cultura_y_deportes: "Turismo cultura y deportes",
+      intendencia: "Intendencia",
+      salud: "Salud",
+      educacion: "Educación",
+      desarrollo_social: "Desarrollo social",
+      zoonosis: "Zoonosis",
+    };
+    return labels[area] || area.charAt(0).toUpperCase() + area.slice(1);
+  };
+
   const areas = [
     "todas",
-    "obras",
-    "cultura",
-    "turismo",
+    "obras_publicas",
+    "obras_privadas",
+    "dispo",
+    "turismo_cultura_y_deportes",
     "intendencia",
-    "deportes",
-    "educacion",
     "salud",
-    "ambiente",
+    "educacion",
+    "desarrollo_social",
+    "zoonosis",
   ];
   const meses = [
     "todos",
@@ -81,7 +97,6 @@ const Galeria = () => {
     setCargando(true);
     try {
       const response = await api.get("/fotos");
-      // Ordenar por fecha descendente (las más nuevas primero)
       const fotosOrdenadas = (response.data.fotos || []).sort().reverse();
       setGaleria(fotosOrdenadas);
       setGaleriaOriginal(fotosOrdenadas);
@@ -98,7 +113,6 @@ const Galeria = () => {
     cargarGaleria();
   }, []);
 
-  // Extraer información de la ruta del archivo
   const extraerInfo = (ruta) => {
     const partes = ruta.split("/");
     const area = partes[0] || "";
@@ -113,24 +127,19 @@ const Galeria = () => {
     return { area, anio, mes, dia, nombreArchivo, fecha, nombreMes };
   };
 
-  // Filtrar galería
   const galeriaFiltrada = galeria.filter((item) => {
-    const { area, anio, mes, dia, nombreArchivo, fecha } = extraerInfo(item);
+    const { area, mes, dia, nombreArchivo, fecha } = extraerInfo(item);
 
-    // Filtro por área
     if (filtroArea !== "todas" && area !== filtroArea) return false;
 
-    // Filtro por mes
     if (filtroMes !== "todos") {
       const mesNumero = String(meses.indexOf(filtroMes)).padStart(2, "0");
       if (mes !== mesNumero && mes !== `0${meses.indexOf(filtroMes)}`)
         return false;
     }
 
-    // Filtro por día específico
     if (filtroDia && fecha !== filtroDia) return false;
 
-    // Búsqueda por texto
     if (busqueda) {
       const busquedaLower = busqueda.toLowerCase();
       return (
@@ -155,7 +164,7 @@ const Galeria = () => {
 
   if (cargando) {
     return (
-      <Box display="flex" justifyContent="center" my={4}>
+      <Box display="flex" justifyContent="center" my={6}>
         <CircularProgress />
       </Box>
     );
@@ -166,95 +175,30 @@ const Galeria = () => {
   }
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        🖼️ Galería de Medios
-      </Typography>
-
-      {/* Filtros */}
+    <Box>
+      {/* Header */}
       <Box
         sx={{
           mb: 3,
           display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
           alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Área</InputLabel>
-          <Select
-            value={filtroArea}
-            onChange={(e) => setFiltroArea(e.target.value)}
-            label="Área"
-          >
-            {areas.map((a) => (
-              <MenuItem key={a} value={a}>
-                {a === "todas"
-                  ? "Todas"
-                  : a.charAt(0).toUpperCase() + a.slice(1)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 130 }}>
-          <InputLabel>Mes</InputLabel>
-          <Select
-            value={filtroMes}
-            onChange={(e) => setFiltroMes(e.target.value)}
-            label="Mes"
-          >
-            {meses.map((m) => (
-              <MenuItem key={m} value={m}>
-                {m === "todos" ? "Todos" : m}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DatePicker
-            label="Día específico"
-            value={filtroDia ? new Date(filtroDia) : null}
-            onChange={(newValue) => {
-              setFiltroDia(
-                newValue ? newValue.toISOString().split("T")[0] : "",
-              );
-            }}
-            slotProps={{ textField: { size: "small", sx: { minWidth: 160 } } }}
-          />
-        </LocalizationProvider>
-
-        <TextField
-          size="small"
-          label="Buscar"
-          placeholder="Área o nombre..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          InputProps={{
-            startAdornment: <Search fontSize="small" sx={{ mr: 0.5 }} />,
-          }}
-          sx={{ minWidth: 200 }}
-        />
-
-        {hayFiltrosActivos && (
-          <Chip
-            label="Limpiar filtros"
-            onClick={limpiarFiltros}
-            onDelete={limpiarFiltros}
-            deleteIcon={<Clear />}
-            color="primary"
-            variant="outlined"
-          />
-        )}
-
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            Galería de Medios
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {galeriaFiltrada.length} archivo(s)
+            {hayFiltrosActivos && " (filtrado)"}
+          </Typography>
+        </Box>
         <ToggleButtonGroup
           value={vista}
           exclusive
           onChange={(e, val) => val && setVista(val)}
           size="small"
-          sx={{ ml: "auto" }}
         >
           <ToggleButton value="grid">
             <GridView fontSize="small" />
@@ -265,24 +209,107 @@ const Galeria = () => {
         </ToggleButtonGroup>
       </Box>
 
-      {/* Resultados */}
+      {/* Filtros */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          alignItems={{ sm: "center" }}
+        >
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Área</InputLabel>
+            <Select
+              value={filtroArea}
+              onChange={(e) => setFiltroArea(e.target.value)}
+              label="Área"
+            >
+              {areas.map((a) => (
+                <MenuItem key={a} value={a}>
+                  {formatAreaLabel(a)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Mes</InputLabel>
+            <Select
+              value={filtroMes}
+              onChange={(e) => setFiltroMes(e.target.value)}
+              label="Mes"
+            >
+              {meses.map((m) => (
+                <MenuItem key={m} value={m}>
+                  {m === "todos" ? "Todos" : m}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Día específico"
+              value={filtroDia ? new Date(filtroDia) : null}
+              onChange={(newValue) => {
+                setFiltroDia(
+                  newValue ? newValue.toISOString().split("T")[0] : "",
+                );
+              }}
+              slotProps={{
+                textField: { size: "small", sx: { minWidth: 160 } },
+              }}
+            />
+          </LocalizationProvider>
+
+          <TextField
+            size="small"
+            label="Buscar"
+            placeholder="Área o nombre..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            InputProps={{
+              startAdornment: <Search fontSize="small" sx={{ mr: 0.5 }} />,
+            }}
+            sx={{ minWidth: 200 }}
+          />
+
+          {hayFiltrosActivos && (
+            <Chip
+              label="Limpiar"
+              onClick={limpiarFiltros}
+              onDelete={limpiarFiltros}
+              deleteIcon={<Clear />}
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+          )}
+        </Stack>
+      </Paper>
+
+      {/* Contenido */}
       {galeriaFiltrada.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 8 }}>
-          <Typography variant="h1" sx={{ fontSize: "4rem", mb: 2 }}>
-            🖼️
-          </Typography>
-          <Typography variant="h6" color="textSecondary" gutterBottom>
+        <Paper
+          sx={{
+            p: 6,
+            textAlign: "center",
+            bgcolor: "grey.50",
+          }}
+        >
+          <PhotoLibrary
+            sx={{ fontSize: 64, color: "grey.300", mb: 2 }}
+          />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
             No hay fotos o videos
           </Typography>
-          <Typography variant="body2" color="textSecondary">
+          <Typography variant="body2" color="text.secondary">
             Subí tus primeros archivos desde la pestaña "Subir"
           </Typography>
-        </Box>
+        </Paper>
       ) : vista === "grid" ? (
         <Grid container spacing={2}>
           {galeriaFiltrada.map((item, idx) => {
-            const { area, nombreArchivo, fecha, nombreMes, dia } =
-              extraerInfo(item);
+            const { area, nombreArchivo, fecha, dia } = extraerInfo(item);
             const esVideo = item.match(/\.(mp4|webm|mov)$/i);
             const ruta = `/api/uploads/${item}`;
             const fechaFormateada = fecha
@@ -293,52 +320,73 @@ const Galeria = () => {
               <Grid item xs={6} sm={4} md={3} lg={2} key={idx}>
                 <Box
                   sx={{
-                    border: "1px solid #e0e0e0",
                     borderRadius: 2,
                     overflow: "hidden",
+                    border: "1px solid",
+                    borderColor: "grey.200",
                     cursor: "pointer",
-                    transition: "transform 0.2s, box-shadow 0.2s",
+                    transition: "all 0.2s ease",
                     "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: 3,
+                      borderColor: "primary.main",
+                      boxShadow: "0 4px 16px rgba(27,58,92,0.12)",
+                      transform: "translateY(-2px)",
                     },
                   }}
                   onClick={() => !esVideo && setImagenSeleccionada(ruta)}
                 >
                   {esVideo ? (
-                    <video
-                      src={ruta}
-                      style={{ width: "100%", height: 120, objectFit: "cover" }}
-                      controls
-                    />
+                    <Box sx={{ position: "relative" }}>
+                      <video
+                        src={ruta}
+                        style={{
+                          width: "100%",
+                          height: 140,
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                        controls
+                      />
+                    </Box>
                   ) : (
                     <img
                       src={ruta}
                       alt={nombreArchivo}
-                      style={{ width: "100%", height: 120, objectFit: "cover" }}
+                      style={{
+                        width: "100%",
+                        height: 140,
+                        objectFit: "cover",
+                        display: "block",
+                      }}
                     />
                   )}
-                  <Box sx={{ p: 1, bgcolor: "#f5f5f5" }}>
+                  <Box sx={{ p: 1.5, bgcolor: "white" }}>
                     <Chip
-                      label={area}
+                      label={formatAreaLabel(area)}
                       size="small"
-                      sx={{ mb: 0.5, fontSize: "10px", height: 20 }}
+                      sx={{
+                        mb: 0.5,
+                        height: 22,
+                        fontSize: "0.7rem",
+                        bgcolor: "grey.100",
+                      }}
                     />
                     <Typography
                       variant="caption"
                       display="block"
-                      color="textSecondary"
-                      sx={{ fontSize: "9px" }}
+                      color="text.secondary"
+                      sx={{ fontSize: "0.7rem" }}
                     >
-                      📅 {fechaFormateada}
+                      {fechaFormateada}
                     </Typography>
                     <Typography
                       variant="caption"
                       display="block"
                       sx={{
-                        fontSize: "9px",
+                        fontSize: "0.68rem",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        color: "text.secondary",
                       }}
                     >
                       {nombreArchivo.length > 25
@@ -352,74 +400,80 @@ const Galeria = () => {
           })}
         </Grid>
       ) : (
-        <Box sx={{ maxHeight: 500, overflow: "auto" }}>
-          {galeriaFiltrada.map((item, idx) => {
-            const { area, nombreArchivo, fecha } = extraerInfo(item);
-            const ruta = `/api/uploads/${item}`;
-            const esVideo = item.match(/\.(mp4|webm|mov)$/i);
-            return (
-              <Box
-                key={idx}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  p: 1.5,
-                  borderBottom: "1px solid #e0e0e0",
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "#f5f5f5" },
-                }}
-                onClick={() => !esVideo && setImagenSeleccionada(ruta)}
-              >
-                {esVideo ? (
-                  <video
-                    src={ruta}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      objectFit: "cover",
-                      borderRadius: 4,
-                    }}
-                  />
-                ) : (
-                  <img
-                    src={ruta}
-                    alt={nombreArchivo}
-                    style={{
-                      width: 50,
-                      height: 50,
-                      objectFit: "cover",
-                      borderRadius: 4,
-                    }}
-                  />
-                )}
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" noWrap>
-                    {nombreArchivo}
-                  </Typography>
-                  <Box display="flex" gap={1} mt={0.5}>
-                    <Chip
-                      label={area}
-                      size="small"
-                      sx={{ height: 20, fontSize: "10px" }}
+        <Paper>
+          <Box sx={{ maxHeight: 600, overflow: "auto" }}>
+            {galeriaFiltrada.map((item, idx) => {
+              const { area, nombreArchivo, fecha } = extraerInfo(item);
+              const ruta = `/api/uploads/${item}`;
+              const esVideo = item.match(/\.(mp4|webm|mov)$/i);
+              return (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    px: 2,
+                    py: 1.5,
+                    borderBottom: "1px solid",
+                    borderColor: "grey.100",
+                    cursor: "pointer",
+                    transition: "background-color 0.15s",
+                    "&:hover": { bgcolor: "grey.50" },
+                  }}
+                  onClick={() => !esVideo && setImagenSeleccionada(ruta)}
+                >
+                  {esVideo ? (
+                    <video
+                      src={ruta}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                      }}
                     />
-                    <Typography variant="caption" color="textSecondary">
-                      {fecha}
+                  ) : (
+                    <img
+                      src={ruta}
+                      alt={nombreArchivo}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                      }}
+                    />
+                  )}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" noWrap>
+                      {nombreArchivo}
                     </Typography>
+                    <Box display="flex" gap={1} mt={0.5} alignItems="center">
+                      <Chip
+                        label={formatAreaLabel(area)}
+                        size="small"
+                        sx={{ height: 20, fontSize: "0.65rem" }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {fecha}
+                      </Typography>
+                    </Box>
                   </Box>
+                  <FolderOpen fontSize="small" color="action" />
                 </Box>
-                <FolderOpen fontSize="small" color="action" />
-              </Box>
-            );
-          })}
-        </Box>
+              );
+            })}
+          </Box>
+        </Paper>
       )}
 
-      {/* Modal para ver imagen en grande */}
+      {/* Modal imagen */}
       <Dialog
         open={!!imagenSeleccionada}
         onClose={() => setImagenSeleccionada(null)}
         maxWidth="lg"
+        fullWidth
       >
         <DialogContent sx={{ p: 0, position: "relative" }}>
           <IconButton
@@ -427,8 +481,10 @@ const Galeria = () => {
               position: "absolute",
               top: 8,
               right: 8,
-              bgcolor: "rgba(0,0,0,0.5)",
+              bgcolor: "rgba(0,0,0,0.6)",
               color: "white",
+              zIndex: 1,
+              "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
             }}
             onClick={() => setImagenSeleccionada(null)}
           >
@@ -437,11 +493,16 @@ const Galeria = () => {
           <img
             src={imagenSeleccionada}
             alt=""
-            style={{ width: "100%", maxHeight: "90vh", objectFit: "contain" }}
+            style={{
+              width: "100%",
+              maxHeight: "90vh",
+              objectFit: "contain",
+              display: "block",
+            }}
           />
         </DialogContent>
       </Dialog>
-    </Paper>
+    </Box>
   );
 };
 

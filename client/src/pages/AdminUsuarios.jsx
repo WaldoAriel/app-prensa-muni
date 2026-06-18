@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Paper,
   Typography,
@@ -23,20 +23,21 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Switch,
-  FormControlLabel,
-  Tooltip
-} from '@mui/material';
+  Tooltip,
+  Stack,
+} from "@mui/material";
 import {
   Edit,
   Delete,
   Add,
   Block,
   CheckCircle,
-  Refresh
-} from '@mui/icons-material';
-import api from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+  Refresh,
+  AdminPanelSettings,
+  PersonAdd,
+} from "@mui/icons-material";
+import api from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const AdminUsuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -46,23 +47,22 @@ const AdminUsuarios = () => {
   const [dialogEditar, setDialogEditar] = useState(false);
   const [usuarioActual, setUsuarioActual] = useState(null);
   const { usuario: usuarioLogueado } = useAuth();
-  
-  // Formulario
+
   const [form, setForm] = useState({
-    nombre: '',
-    email: '',
-    password: '',
-    rol: 'campo'
+    nombre: "",
+    email: "",
+    password: "",
+    rol: "campo",
   });
 
   const cargarUsuarios = async () => {
     setCargando(true);
     try {
-      const response = await api.get('/admin/usuarios');
+      const response = await api.get("/admin/usuarios");
       setUsuarios(response.data.usuarios);
       setError(null);
     } catch (error) {
-      setError(error.response?.data?.error || 'Error al cargar usuarios');
+      setError(error.response?.data?.error || "Error al cargar usuarios");
     } finally {
       setCargando(false);
     }
@@ -74,12 +74,12 @@ const AdminUsuarios = () => {
 
   const handleCrear = async () => {
     try {
-      await api.post('/admin/usuarios', form);
+      await api.post("/admin/usuarios", form);
       setDialogAbierto(false);
-      setForm({ nombre: '', email: '', password: '', rol: 'campo' });
+      setForm({ nombre: "", email: "", password: "", rol: "campo" });
       cargarUsuarios();
     } catch (error) {
-      alert(error.response?.data?.error || 'Error al crear usuario');
+      alert(error.response?.data?.error || "Error al crear usuario");
     }
   };
 
@@ -90,35 +90,39 @@ const AdminUsuarios = () => {
       if (usuarioActual.email !== form.email) data.email = form.email;
       if (usuarioActual.rol !== form.rol) data.rol = form.rol;
       if (form.password) data.password = form.password;
-      
+
       await api.put(`/admin/usuarios/${usuarioActual.id}`, data);
       setDialogEditar(false);
-      setForm({ nombre: '', email: '', password: '', rol: 'campo' });
+      setForm({ nombre: "", email: "", password: "", rol: "campo" });
       setUsuarioActual(null);
       cargarUsuarios();
     } catch (error) {
-      alert(error.response?.data?.error || 'Error al actualizar usuario');
+      alert(error.response?.data?.error || "Error al actualizar usuario");
     }
   };
 
   const handleToggleActivo = async (usuario) => {
     try {
       await api.put(`/admin/usuarios/${usuario.id}`, {
-        activo: !usuario.activo
+        activo: !usuario.activo,
       });
       cargarUsuarios();
     } catch (error) {
-      alert(error.response?.data?.error || 'Error al cambiar estado');
+      alert(error.response?.data?.error || "Error al cambiar estado");
     }
   };
 
   const handleEliminar = async (usuario) => {
-    if (window.confirm(`¿Eliminar a ${usuario.nombre}? Esta acción no se puede deshacer.`)) {
+    if (
+      window.confirm(
+        `¿Eliminar a ${usuario.nombre}? Esta acción no se puede deshacer.`,
+      )
+    ) {
       try {
         await api.delete(`/admin/usuarios/${usuario.id}`);
         cargarUsuarios();
       } catch (error) {
-        alert(error.response?.data?.error || 'Error al eliminar usuario');
+        alert(error.response?.data?.error || "Error al eliminar usuario");
       }
     }
   };
@@ -128,111 +132,168 @@ const AdminUsuarios = () => {
     setForm({
       nombre: usuario.nombre,
       email: usuario.email,
-      password: '',
-      rol: usuario.rol
+      password: "",
+      rol: usuario.rol,
     });
     setDialogEditar(true);
   };
 
   if (cargando) {
     return (
-      <Box display="flex" justifyContent="center" my={4}>
+      <Box display="flex" justifyContent="center" my={6}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">
-          👥 Administración de Usuarios
-        </Typography>
-        <Box display="flex" gap={1}>
-          <IconButton onClick={cargarUsuarios} title="Actualizar">
-            <Refresh />
-          </IconButton>
+    <Box>
+      {/* Header */}
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            Administración de Usuarios
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {usuarios.length} usuario(s) registrado(s)
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Actualizar">
+            <IconButton onClick={cargarUsuarios}>
+              <Refresh />
+            </IconButton>
+          </Tooltip>
           <Button
             variant="contained"
-            startIcon={<Add />}
+            startIcon={<PersonAdd />}
             onClick={() => setDialogAbierto(true)}
           >
             Nuevo Usuario
           </Button>
-        </Box>
+        </Stack>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Rol</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell>Fecha registro</TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {usuarios.map((user) => (
-              <TableRow key={user.id} sx={{ opacity: user.activo ? 1 : 0.6 }}>
-                <TableCell>{user.id}</TableCell>
-                <TableCell>
-                  {user.nombre}
-                  {user.id === usuarioLogueado?.id && (
-                    <Chip label="Tú" size="small" sx={{ ml: 1 }} />
-                  )}
-                </TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={user.rol === 'admin' ? '👑 Admin' : '📸 Campo'} 
-                    color={user.rol === 'admin' ? 'primary' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip 
-                    label={user.activo ? 'Activo' : 'Inactivo'} 
-                    color={user.activo ? 'success' : 'error'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  {new Date(user.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell align="center">
-                  <Tooltip title="Activar/Desactivar">
-                    <IconButton onClick={() => handleToggleActivo(user)}>
-                      {user.activo ? <Block /> : <CheckCircle />}
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Editar">
-                    <IconButton onClick={() => abrirEditar(user)}>
-                      <Edit />
-                    </IconButton>
-                  </Tooltip>
-                  {user.id !== usuarioLogueado?.id && (
-                    <Tooltip title="Eliminar">
-                      <IconButton onClick={() => handleEliminar(user)}>
-                        <Delete />
+      <Paper>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nombre</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Rol</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Registro</TableCell>
+                <TableCell align="center">Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {usuarios.map((user) => (
+                <TableRow
+                  key={user.id}
+                  sx={{ opacity: user.activo ? 1 : 0.5 }}
+                >
+                  <TableCell>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {user.nombre}
+                      </Typography>
+                      {user.id === usuarioLogueado?.id && (
+                        <Chip label="Tú" size="small" color="primary" />
+                      )}
+                    </Stack>
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.rol === "admin" ? "Admin" : "Campo"}
+                      color={user.rol === "admin" ? "primary" : "default"}
+                      size="small"
+                      icon={user.rol === "admin" ? <AdminPanelSettings /> : undefined}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      icon={user.activo ? <CheckCircle /> : <Block />}
+                      label={user.activo ? "Activo" : "Inactivo"}
+                      color={user.activo ? "success" : "error"}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Activar/Desactivar">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleToggleActivo(user)}
+                      >
+                        {user.activo ? (
+                          <Block fontSize="small" />
+                        ) : (
+                          <CheckCircle fontSize="small" />
+                        )}
                       </IconButton>
                     </Tooltip>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                    <Tooltip title="Editar">
+                      <IconButton
+                        size="small"
+                        onClick={() => abrirEditar(user)}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {user.id !== usuarioLogueado?.id && (
+                      <Tooltip title="Eliminar">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEliminar(user)}
+                          color="error"
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
-      {/* Dialog para CREAR usuario */}
-      <Dialog open={dialogAbierto} onClose={() => setDialogAbierto(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>➕ Nuevo Usuario</DialogTitle>
+      {/* Dialog CREAR */}
+      <Dialog
+        open={dialogAbierto}
+        onClose={() => setDialogAbierto(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <PersonAdd color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Nuevo Usuario
+            </Typography>
+          </Stack>
+        </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -264,20 +325,34 @@ const AdminUsuarios = () => {
               onChange={(e) => setForm({ ...form, rol: e.target.value })}
               label="Rol"
             >
-              <MenuItem value="campo">📸 Fotógrafo (campo)</MenuItem>
-              <MenuItem value="admin">👑 Administrador</MenuItem>
+              <MenuItem value="campo">Fotógrafo (campo)</MenuItem>
+              <MenuItem value="admin">Administrador</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogAbierto(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleCrear}>Crear</Button>
+          <Button variant="contained" onClick={handleCrear}>
+            Crear
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialog para EDITAR usuario */}
-      <Dialog open={dialogEditar} onClose={() => setDialogEditar(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>✏️ Editar Usuario</DialogTitle>
+      {/* Dialog EDITAR */}
+      <Dialog
+        open={dialogEditar}
+        onClose={() => setDialogEditar(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Edit color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Editar Usuario
+            </Typography>
+          </Stack>
+        </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -309,17 +384,19 @@ const AdminUsuarios = () => {
               onChange={(e) => setForm({ ...form, rol: e.target.value })}
               label="Rol"
             >
-              <MenuItem value="campo">📸 Fotógrafo (campo)</MenuItem>
-              <MenuItem value="admin">👑 Administrador</MenuItem>
+              <MenuItem value="campo">Fotógrafo (campo)</MenuItem>
+              <MenuItem value="admin">Administrador</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogEditar(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleActualizar}>Guardar</Button>
+          <Button variant="contained" onClick={handleActualizar}>
+            Guardar
+          </Button>
         </DialogActions>
       </Dialog>
-    </Paper>
+    </Box>
   );
 };
 

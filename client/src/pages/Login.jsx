@@ -9,9 +9,10 @@ import {
   Box,
   Alert,
   CircularProgress,
-  alpha,
+  Avatar,
+  Divider,
 } from "@mui/material";
-import { Waves, Login as LoginIcon } from "@mui/icons-material";
+import { CameraAlt, Login as LoginIcon } from "@mui/icons-material";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -35,54 +36,67 @@ const Login = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "grey.100",
+        px: 2,
+      }}
+    >
+      <Paper
+        elevation={0}
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          p: 0,
+          width: "100%",
+          maxWidth: 420,
+          borderRadius: 4,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "grey.200",
         }}
       >
-        <Paper
-          elevation={24}
+        {/* Header */}
+        <Box
           sx={{
-            p: 5,
-            width: "100%",
-            background: "linear-gradient(135deg, #ffffff 0%, #f8faff 100%)",
-            position: "relative",
-            overflow: "hidden",
+            bgcolor: "primary.dark",
+            color: "white",
+            py: 4,
+            textAlign: "center",
           }}
         >
-          {/* Decoración ballena */}
-          <Box
-            sx={{ position: "absolute", top: -20, right: -20, opacity: 0.1 }}
+          <Avatar
+            sx={{
+              bgcolor: "secondary.main",
+              width: 64,
+              height: 64,
+              mx: "auto",
+              mb: 2,
+            }}
           >
-            <Waves sx={{ fontSize: 150 }} />
-          </Box>
+            <CameraAlt sx={{ fontSize: 32 }} />
+          </Avatar>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            Prensa Municipal
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
+            Sistema de Gestión de Medios
+          </Typography>
+        </Box>
 
-          <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Typography
-              variant="h1"
-              component="h1"
-              sx={{
-                fontSize: "4rem",
-                background: "linear-gradient(135deg, #1a5276 0%, #2e86c1 100%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                color: "transparent",
-                mb: 1,
-              }}
-            >
-              🐋
-            </Typography>
-            <Typography variant="h4" gutterBottom fontWeight={700}>
-              Prensa Muni
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Sistema de Gestión de Medios
-            </Typography>
-          </Box>
+        {/* Form */}
+        <Box sx={{ p: 4 }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 0.5, fontWeight: 600, color: "text.primary" }}
+          >
+            Iniciar sesión
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Ingresá tus credenciales para acceder
+          </Typography>
 
           <form onSubmit={handleSubmit}>
             <TextField
@@ -94,7 +108,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoFocus
-              variant="outlined"
+              size="medium"
             />
 
             <TextField
@@ -105,11 +119,11 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              variant="outlined"
+              size="medium"
             />
 
             {error && (
-              <Alert severity="error" sx={{ mt: 2, borderRadius: 3 }}>
+              <Alert severity="error" sx={{ mt: 2 }}>
                 {error}
               </Alert>
             )}
@@ -121,25 +135,31 @@ const Login = () => {
               color="primary"
               size="large"
               startIcon={
-                cargando ? <CircularProgress size={20} /> : <LoginIcon />
+                cargando ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <LoginIcon />
+                )
               }
               disabled={cargando}
-              sx={{ mt: 3, py: 1.5 }}
+              sx={{ mt: 3, py: 1.5, fontSize: "1rem" }}
             >
-              {cargando ? "Ingresando..." : "Ingresar al Sistema"}
+              {cargando ? "Ingresando..." : "Ingresar"}
             </Button>
           </form>
 
+          <Divider sx={{ my: 3 }} />
+
           <Typography
             variant="caption"
-            color="textSecondary"
-            sx={{ mt: 3, display: "block", textAlign: "center" }}
+            color="text.secondary"
+            sx={{ display: "block", textAlign: "center" }}
           >
             Sistema exclusivo para personal de prensa
           </Typography>
-        </Paper>
-      </Box>
-    </Container>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 

@@ -16,6 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
+const UPLOADS_DIR = path.resolve(process.env.UPLOADS_DIR || "./uploads");
 
 // ========== CONEXIÓN A BASE DE DATOS ==========
 const sequelize = new Sequelize(
@@ -56,6 +57,7 @@ const Subida = sequelize.define(
     usuario_id: { type: DataTypes.INTEGER, allowNull: false },
     area: { type: DataTypes.STRING, allowNull: false },
     descripcion: { type: DataTypes.STRING, allowNull: false },
+    contexto_redes: { type: DataTypes.TEXT, allowNull: false },
     archivos: { type: DataTypes.JSON, allowNull: false },
     cantidad: { type: DataTypes.INTEGER, allowNull: false },
     ip: { type: DataTypes.STRING },
@@ -73,7 +75,7 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.static("public"));
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(UPLOADS_DIR));
 
 // ========== FUNCIONES AUXILIARES ==========
 function limpiarTexto(texto) {
@@ -97,7 +99,7 @@ function generarNombreYRuta(area, descripcion, correlativo, extension, fecha) {
   const dia = String(fecha.getDate()).padStart(2, "0");
 
   // 👈 ORDEN CORRECTO: AREA/AÑO/MES/DIA
-  const carpetaBase = path.join("uploads", areaLimpia, String(anio), mes, dia);
+  const carpetaBase = path.join(UPLOADS_DIR, areaLimpia, String(anio), mes, dia);
 
   if (!fs.existsSync(carpetaBase)) {
     fs.mkdirSync(carpetaBase, { recursive: true });
@@ -183,7 +185,7 @@ const upload = multer({ storage });
 
 app.post("/subir", verificarToken, upload.array("fotos"), async (req, res) => {
   try {
-    const { area, descripcion } = req.body;
+    const { area, descripcion, contexto_redes } = req.body;
     const archivos = req.files;
     const fechaActual = new Date();
     const usuarioId = req.usuario.id;
@@ -194,6 +196,8 @@ app.post("/subir", verificarToken, upload.array("fotos"), async (req, res) => {
     if (!area) return res.status(400).json({ error: "Área requerida" });
     if (!descripcion?.trim())
       return res.status(400).json({ error: "Descripción requerida" });
+    if (!contexto_redes?.trim())
+      return res.status(400).json({ error: "Contexto para redes requerido" });
 
     console.log(
       `📸 ${req.usuario.nombre} sube ${archivos.length} archivos a ${area}: ${descripcion}`,
@@ -221,6 +225,7 @@ app.post("/subir", verificarToken, upload.array("fotos"), async (req, res) => {
       usuario_id: usuarioId,
       area,
       descripcion,
+      contexto_redes,
       archivos: JSON.stringify(resultados),
       cantidad: resultados.length,
       ip,
@@ -248,14 +253,14 @@ app.get("/fotos", verificarToken, (req, res) => {
       if (fs.statSync(ruta).isDirectory()) {
         resultados = resultados.concat(listarArchivos(ruta));
       } else {
-        resultados.push(ruta.replace(/\\/g, "/").replace("uploads/", ""));
+        resultados.push(ruta.replace(/\\/g, "/").replace(UPLOADS_DIR.replace(/\\/g, "/").replace(/\/$/, "") + "/", ""));
       }
     }
     return resultados;
   };
 
   try {
-    const archivos = listarArchivos("uploads");
+    const archivos = listarArchivos(UPLOADS_DIR);
     res.json({ fotos: archivos });
   } catch (error) {
     res.status(500).json({ error: "Error al leer archivos" });
@@ -413,7 +418,7 @@ app.listen(PORT, () => {
   console.log(`
     🐋 Servidor de Prensa Municipal funcionando!
     📡 http://localhost:${PORT}
-    📁 Estructura: uploads/AREA/AÑO/MES/DIA/
+    📁 Estructura: ${UPLOADS_DIR}/AREA/AÑO/MES/DIA/
     🔐 Autenticación activada
     `);
 });
