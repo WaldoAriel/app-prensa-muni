@@ -99,7 +99,13 @@ function generarNombreYRuta(area, descripcion, correlativo, extension, fecha) {
   const dia = String(fecha.getDate()).padStart(2, "0");
 
   // 👈 ORDEN CORRECTO: AREA/AÑO/MES/DIA
-  const carpetaBase = path.join(UPLOADS_DIR, areaLimpia, String(anio), mes, dia);
+  const carpetaBase = path.join(
+    UPLOADS_DIR,
+    areaLimpia,
+    String(anio),
+    mes,
+    dia,
+  );
 
   if (!fs.existsSync(carpetaBase)) {
     fs.mkdirSync(carpetaBase, { recursive: true });
@@ -253,7 +259,14 @@ app.get("/fotos", verificarToken, (req, res) => {
       if (fs.statSync(ruta).isDirectory()) {
         resultados = resultados.concat(listarArchivos(ruta));
       } else {
-        resultados.push(ruta.replace(/\\/g, "/").replace(UPLOADS_DIR.replace(/\\/g, "/").replace(/\/$/, "") + "/", ""));
+        resultados.push(
+          ruta
+            .replace(/\\/g, "/")
+            .replace(
+              UPLOADS_DIR.replace(/\\/g, "/").replace(/\/$/, "") + "/",
+              "",
+            ),
+        );
       }
     }
     return resultados;
@@ -289,134 +302,138 @@ Subida.belongsTo(Usuario, { foreignKey: "usuario_id" });
 await sequelize.sync({ alter: true });
 
 // ========== ADMIN: Obtener todos los usuarios ==========
-app.get('/admin/usuarios', verificarToken, async (req, res) => {
+app.get("/admin/usuarios", verificarToken, async (req, res) => {
   try {
     // Solo admins pueden ver la lista
-    if (req.usuario.rol !== 'admin') {
-      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol admin.' });
+    if (req.usuario.rol !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "Acceso denegado. Se requiere rol admin." });
     }
-    
+
     const usuarios = await Usuario.findAll({
-      attributes: ['id', 'nombre', 'email', 'rol', 'activo', 'created_at'],
-      order: [['created_at', 'DESC']]
+      attributes: ["id", "nombre", "email", "rol", "activo", "created_at"],
+      order: [["created_at", "DESC"]],
     });
     res.json({ usuarios });
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener usuarios' });
+    res.status(500).json({ error: "Error al obtener usuarios" });
   }
 });
 
 // ========== ADMIN: Crear usuario ==========
-app.post('/admin/usuarios', verificarToken, async (req, res) => {
+app.post("/admin/usuarios", verificarToken, async (req, res) => {
   try {
-    if (req.usuario.rol !== 'admin') {
-      return res.status(403).json({ error: 'Acceso denegado' });
+    if (req.usuario.rol !== "admin") {
+      return res.status(403).json({ error: "Acceso denegado" });
     }
-    
+
     const { nombre, email, password, rol } = req.body;
-    
+
     if (!nombre || !email || !password) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
-    
+
     // Verificar si ya existe
     const existe = await Usuario.findOne({ where: { email } });
     if (existe) {
-      return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
+      return res
+        .status(400)
+        .json({ error: "Ya existe un usuario con ese email" });
     }
-    
+
     const hashedPassword = bcrypt.hashSync(password, 10);
-    
+
     const nuevoUsuario = await Usuario.create({
       nombre,
       email,
       password: hashedPassword,
-      rol: rol || 'campo',
-      activo: true
+      rol: rol || "campo",
+      activo: true,
     });
-    
+
     res.json({
-      mensaje: 'Usuario creado exitosamente',
+      mensaje: "Usuario creado exitosamente",
       usuario: {
         id: nuevoUsuario.id,
         nombre: nuevoUsuario.nombre,
         email: nuevoUsuario.email,
         rol: nuevoUsuario.rol,
-        activo: nuevoUsuario.activo
-      }
+        activo: nuevoUsuario.activo,
+      },
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error al crear usuario' });
+    res.status(500).json({ error: "Error al crear usuario" });
   }
 });
 
 // ========== ADMIN: Actualizar usuario ==========
-app.put('/admin/usuarios/:id', verificarToken, async (req, res) => {
+app.put("/admin/usuarios/:id", verificarToken, async (req, res) => {
   try {
-    if (req.usuario.rol !== 'admin') {
-      return res.status(403).json({ error: 'Acceso denegado' });
+    if (req.usuario.rol !== "admin") {
+      return res.status(403).json({ error: "Acceso denegado" });
     }
-    
+
     const { id } = req.params;
     const { nombre, email, rol, activo, password } = req.body;
-    
+
     const usuario = await Usuario.findByPk(id);
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    
+
     if (nombre) usuario.nombre = nombre;
     if (email) usuario.email = email;
     if (rol) usuario.rol = rol;
     if (activo !== undefined) usuario.activo = activo;
     if (password) usuario.password = bcrypt.hashSync(password, 10);
-    
+
     await usuario.save();
-    
+
     res.json({
-      mensaje: 'Usuario actualizado',
+      mensaje: "Usuario actualizado",
       usuario: {
         id: usuario.id,
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
-        activo: usuario.activo
-      }
+        activo: usuario.activo,
+      },
     });
   } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar usuario' });
+    res.status(500).json({ error: "Error al actualizar usuario" });
   }
 });
 
 // ========== ADMIN: Eliminar usuario ==========
-app.delete('/admin/usuarios/:id', verificarToken, async (req, res) => {
+app.delete("/admin/usuarios/:id", verificarToken, async (req, res) => {
   try {
-    if (req.usuario.rol !== 'admin') {
-      return res.status(403).json({ error: 'Acceso denegado' });
+    if (req.usuario.rol !== "admin") {
+      return res.status(403).json({ error: "Acceso denegado" });
     }
-    
+
     const { id } = req.params;
-    
+
     // No permitir eliminarse a sí mismo
     if (parseInt(id) === req.usuario.id) {
-      return res.status(400).json({ error: 'No puedes eliminarte a vos' });
+      return res.status(400).json({ error: "No puedes eliminarte a vos" });
     }
-    
+
     const usuario = await Usuario.findByPk(id);
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    
+
     await usuario.destroy();
-    res.json({ mensaje: 'Usuario eliminado' });
+    res.json({ mensaje: "Usuario eliminado" });
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar usuario' });
+    res.status(500).json({ error: "Error al eliminar usuario" });
   }
 });
 app.listen(PORT, () => {
   console.log(`
-    🐋 Servidor de Prensa Municipal funcionando!
+    🤳 Servidor de Prensa Municipal funcionando!
     📡 http://localhost:${PORT}
     📁 Estructura: ${UPLOADS_DIR}/AREA/AÑO/MES/DIA/
     🔐 Autenticación activada
