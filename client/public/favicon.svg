@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1B3A5C"/>
-      <stop offset="100%" style="stop-color:#2D5A8E"/>
+      <stop offset="0%" style="stop-color:#FF7204"/>
+      <stop offset="100%" style="stop-color:#CC5B03"/>
     </linearGradient>
   </defs>
   <rect width="100" height="100" rx="20" fill="url(#bg)"/>
   <g transform="translate(50,50)">
     <!-- Camera body -->
-    <rect x="-22" y="-12" width="44" height="30" rx="4" fill="none" stroke="#C8963E" stroke-width="3"/>
+    <rect x="-22" y="-12" width="44" height="30" rx="4" fill="none" stroke="#3EABB5" stroke-width="3"/>
     <!-- Lens -->
-    <circle cx="0" cy="3" r="10" fill="none" stroke="#C8963E" stroke-width="3"/>
-    <circle cx="0" cy="3" r="4" fill="#C8963E"/>
+    <circle cx="0" cy="3" r="10" fill="none" stroke="#3EABB5" stroke-width="3"/>
+    <circle cx="0" cy="3" r="4" fill="#3EABB5"/>
     <!-- Flash -->
-    <rect x="-8" y="-18" width="16" height="6" rx="2" fill="#C8963E"/>
+    <rect x="-8" y="-18" width="16" height="6" rx="2" fill="#3EABB5"/>
   </g>
 </svg>

@@ -155,6 +155,8 @@ const AdminUsuarios = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
         }}
       >
         <Box>
@@ -188,8 +190,8 @@ const AdminUsuarios = () => {
       )}
 
       <Paper>
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 650 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Nombre</TableCell>

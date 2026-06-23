@@ -431,6 +431,38 @@ app.delete("/admin/usuarios/:id", verificarToken, async (req, res) => {
     res.status(500).json({ error: "Error al eliminar usuario" });
   }
 });
+// ========== USUARIO: Cambiar mi contraseña ==========
+app.put("/usuarios/mi-password", verificarToken, async (req, res) => {
+  try {
+    const { passwordActual, passwordNueva } = req.body;
+
+    if (!passwordActual || !passwordNueva) {
+      return res.status(400).json({ error: "Ambas contraseñas son requeridas" });
+    }
+
+    if (passwordNueva.length < 4) {
+      return res.status(400).json({ error: "La nueva contraseña debe tener al menos 4 caracteres" });
+    }
+
+    const usuario = await Usuario.findByPk(req.usuario.id);
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const valido = bcrypt.compareSync(passwordActual, usuario.password);
+    if (!valido) {
+      return res.status(401).json({ error: "La contraseña actual es incorrecta" });
+    }
+
+    usuario.password = bcrypt.hashSync(passwordNueva, 10);
+    await usuario.save();
+
+    res.json({ mensaje: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al cambiar contraseña" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`
     🤳 Servidor de Prensa Municipal funcionando!

@@ -18,6 +18,7 @@ import {
   useMediaQuery,
   useTheme,
   Avatar,
+  Chip,
 } from "@mui/material";
 import {
   CameraAlt,
@@ -28,6 +29,7 @@ import {
   Menu as MenuIcon,
   AdminPanelSettings,
   Person,
+  AccountCircle,
 } from "@mui/icons-material";
 
 const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
@@ -46,6 +48,7 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
       icon: <AdminPanelSettings />,
       soloAdmin: true,
     },
+    { id: "perfil", label: "Mi Perfil", icon: <AccountCircle /> },
   ];
 
   const toggleDrawer = (open) => () => {
@@ -66,7 +69,7 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
       <AppBar
         position="sticky"
         sx={{
-          bgcolor: "primary.dark",
+          bgcolor: "secondary.dark",
           backgroundImage: "none",
         }}
       >
@@ -83,7 +86,14 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
             </IconButton>
           )}
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexGrow: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              flexGrow: 1,
+            }}
+          >
             <Avatar
               sx={{
                 bgcolor: "secondary.main",
@@ -94,20 +104,33 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
               <CameraAlt sx={{ fontSize: 20 }} />
             </Avatar>
             <Box sx={{ lineHeight: 1 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  letterSpacing: "0.02em",
-                  fontSize: { xs: "0.95rem", md: "1.05rem" },
-                }}
-              >
-                Prensa Municipal
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
+                    letterSpacing: "0.02em",
+                    fontSize: { xs: "0.95rem", md: "1.05rem" },
+                  }}
+                >
+                  Prensa Municipal
+                </Typography>
+                <Chip
+                  label="Versión Beta"
+                  size="small"
+                  sx={{
+                    height: 16,
+                    fontSize: "0.5rem",
+                    fontWeight: 600,
+                    bgcolor: "secondary.main",
+                    color: "white",
+                  }}
+                />
+              </Box>
               {!isMobile && (
                 <Typography
                   variant="caption"
-                  sx={{ opacity: 0.7, fontSize: "0.7rem" }}
+                  sx={{ opacity: 0.5, fontSize: "0.7rem" }}
                 >
                   Sistema de Gestión de Medios
                 </Typography>
@@ -130,7 +153,7 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
                     py: 1,
                     bgcolor:
                       seccion === item.id
-                        ? "rgba(255,255,255,0.12)"
+                        ? "hsla(0, 0%, 76%, 0.12)"
                         : "transparent",
                     "&:hover": {
                       bgcolor: "rgba(255,255,255,0.08)",
@@ -182,7 +205,7 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
               display: "flex",
               alignItems: "center",
               gap: 1.5,
-              bgcolor: "primary.dark",
+              bgcolor: "secondary.dark",
               color: "white",
               mb: 1,
             }}
@@ -197,9 +220,22 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
               <CameraAlt sx={{ fontSize: 22 }} />
             </Avatar>
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Prensa Municipal
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Prensa Municipal
+                </Typography>
+                <Chip
+                  label="Beta"
+                  size="small"
+                  sx={{
+                    height: 18,
+                    fontSize: "0.6rem",
+                    fontWeight: 600,
+                    bgcolor: "secondary.main",
+                    color: "white",
+                  }}
+                />
+              </Box>
               <Typography variant="caption" sx={{ opacity: 0.7 }}>
                 {usuario?.nombre} ({usuario?.rol})
               </Typography>
@@ -215,10 +251,10 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
                   sx={{
                     borderRadius: 2,
                     "&.Mui-selected": {
-                      bgcolor: "primary.main",
+                      bgcolor: "secondary.main",
                       color: "white",
                       "&:hover": {
-                        bgcolor: "primary.dark",
+                        bgcolor: "secondary.dark",
                       },
                       "& .MuiListItemIcon-root": {
                         color: "white",
@@ -229,10 +265,7 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
                   <ListItemIcon
                     sx={{
                       minWidth: 40,
-                      color:
-                        seccion === item.id
-                          ? "white"
-                          : "text.secondary",
+                      color: seccion === item.id ? "white" : "text.secondary",
                     }}
                   >
                     {item.id === "subir" && pendientesCount > 0 ? (
@@ -260,7 +293,7 @@ const Navbar = ({ seccion, setSeccion, pendientesCount }) => {
             <ListItem disablePadding>
               <ListItemButton
                 onClick={logout}
-                sx={{ borderRadius: 2, color: "error.main" }}
+                sx={{ borderRadius: 8, color: "error.main" }}
               >
                 <ListItemIcon sx={{ minWidth: 40, color: "error.main" }}>
                   <Logout />

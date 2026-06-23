@@ -3,15 +3,15 @@ import { createTheme } from "@mui/material";
 export const theme = createTheme({
   palette: {
     primary: {
-      main: "#1B3A5C",
-      light: "#2D5A8E",
-      dark: "#0F2440",
+      main: "#FF7204",
+      light: "#FE9800",
+      dark: "#FF7204",
       contrastText: "#ffffff",
     },
     secondary: {
-      main: "#C8963E",
-      light: "#D4AA5C",
-      dark: "#A67A2E",
+      main: "#3EABB5",
+      light: "#5FC0CA",
+      dark: "#2E8C94",
       contrastText: "#ffffff",
     },
     background: {
@@ -81,7 +81,7 @@ export const theme = createTheme({
       styleOverrides: {
         body: {
           scrollbarWidth: "thin",
-          scrollbarColor: "#1B3A5C #E0E0E0",
+          scrollbarColor: "#FF7204 #E0E0E0",
         },
       },
     },
@@ -127,7 +127,7 @@ export const theme = createTheme({
         },
         contained: {
           "&:hover": {
-            boxShadow: "0 4px 16px rgba(27,58,92,0.3)",
+            boxShadow: "0 4px 16px rgba(255,114,4,0.3)",
           },
         },
         outlined: {
@@ -144,7 +144,7 @@ export const theme = createTheme({
           "& .MuiOutlinedInput-root": {
             borderRadius: 10,
             "&:hover fieldset": {
-              borderColor: "#1B3A5C",
+              borderColor: "#FF7204",
             },
           },
         },
@@ -179,7 +179,7 @@ export const theme = createTheme({
         },
         head: {
           fontWeight: 600,
-          color: "#1B3A5C",
+          color: "#FF7204",
           backgroundColor: "#F0F2F5",
         },
       },
@@ -191,7 +191,7 @@ export const theme = createTheme({
             borderBottom: 0,
           },
           "&:hover": {
-            backgroundColor: "rgba(27,58,92,0.03)",
+            backgroundColor: "rgba(255,114,4,0.03)",
           },
         },
       },

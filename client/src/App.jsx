@@ -15,6 +15,7 @@ import api from "./services/api";
 import Historial from "./pages/Historial";
 import Galeria from "./pages/Galeria";
 import AdminUsuarios from "./pages/AdminUsuarios";
+import MiPerfil from "./pages/MiPerfil";
 
 const Dashboard = () => {
   const [seccion, setSeccion] = useState("subir");
@@ -55,6 +56,7 @@ const Dashboard = () => {
         {seccion === "galeria" && <Galeria />}
         {seccion === "historial" && <Historial />}
         {seccion === "admin" && usuario?.rol === "admin" && <AdminUsuarios />}
+        {seccion === "perfil" && <MiPerfil />}
       </Container>
     </>
   );

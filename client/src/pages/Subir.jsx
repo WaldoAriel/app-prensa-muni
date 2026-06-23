@@ -19,7 +19,6 @@ import {
   ListItemText,
   ListItemIcon,
   IconButton,
-  Divider,
   Chip,
   Stack,
 } from "@mui/material";
@@ -28,12 +27,13 @@ import {
   CloudUpload,
   CloudOff,
   Sync,
-  CheckCircle,
   Image,
   Videocam,
   WifiOff,
   Wifi,
   Send,
+  CheckCircle,
+  Error as ErrorIcon,
 } from "@mui/icons-material";
 import {
   guardarPendiente,
@@ -46,7 +46,6 @@ import { useAuth } from "../contexts/AuthContext";
 
 const areas = [
   "Obras públicas",
-  "Obras privadas",
   "DISPO",
   "Turismo cultura y deportes",
   "Intendencia",
@@ -54,6 +53,7 @@ const areas = [
   "Educación",
   "Desarrollo social",
   "Zoonosis",
+  "Otros",
 ];
 
 const Subir = ({ onSubidaExitosa, actualizarContador }) => {
@@ -66,6 +66,8 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
   const [mensaje, setMensaje] = useState(null);
   const [pendientes, setPendientes] = useState([]);
   const [sincronizando, setSincronizando] = useState(false);
+  const [subidasEnCurso, setSubidasEnCurso] = useState(0);
+  const [notificaciones, setNotificaciones] = useState([]);
   const { token } = useAuth();
 
   const hayInternet = navigator.onLine;
@@ -107,6 +109,14 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
     if (actualizarContador) actualizarContador(count);
   };
 
+  const agregarNotificacion = (tipo, texto) => {
+    const id = Date.now();
+    setNotificaciones((prev) => [...prev, { id, tipo, texto }]);
+    setTimeout(() => {
+      setNotificaciones((prev) => prev.filter((n) => n.id !== id));
+    }, 5000);
+  };
+
   const handleArchivosChange = (e) => {
     const files = Array.from(e.target.files);
     setArchivos(files);
@@ -124,42 +134,39 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
       return;
     }
 
-    setSubiendo(true);
-    setProgreso(0);
+    const areaActual = area;
+    const descActual = descripcion;
+    const ctxActual = contextoRedes;
+    const archivosActuales = [...archivos];
+    const cantidadArchivos = archivosActuales.length;
+
+    setArchivos([]);
+    setArea("");
+    setDescripcion("");
+    setContextoRedes("");
+
+    setSubidasEnCurso((prev) => prev + 1);
 
     const formData = new FormData();
-    archivos.forEach((archivo) => formData.append("fotos", archivo));
-    formData.append("area", area);
-    formData.append("descripcion", descripcion);
-    formData.append("contexto_redes", contextoRedes);
+    archivosActuales.forEach((archivo) => formData.append("fotos", archivo));
+    formData.append("area", areaActual);
+    formData.append("descripcion", descActual);
+    formData.append("contexto_redes", ctxActual);
 
     try {
       const response = await api.post("/subir", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (progressEvent) => {
-          const percent = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total,
-          );
-          setProgreso(percent);
-        },
       });
 
-      setMensaje({ type: "success", text: response.data.mensaje });
-      setArchivos([]);
-      setArea("");
-      setDescripcion("");
-      setContextoRedes("");
+      agregarNotificacion("success", `${cantidadArchivos} archivo(s) subidos: ${descActual}`);
       if (onSubidaExitosa) onSubidaExitosa();
-
-      setTimeout(() => setMensaje(null), 3000);
     } catch (error) {
-      setMensaje({
-        type: "error",
-        text: error.response?.data?.error || "Error al subir",
-      });
+      agregarNotificacion(
+        "error",
+        `Error al subir "${descActual}": ${error.response?.data?.error || "Error de conexión"}`
+      );
     } finally {
-      setSubiendo(false);
-      setProgreso(0);
+      setSubidasEnCurso((prev) => prev - 1);
     }
   };
 
@@ -261,8 +268,24 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
 
   return (
     <Box>
+      {/* Notificaciones de subida en background */}
+      <Stack spacing={1} sx={{ mb: 3 }}>
+        {notificaciones.map((n) => (
+          <Alert
+            key={n.id}
+            severity={n.tipo}
+            icon={n.tipo === "success" ? <CheckCircle /> : <ErrorIcon />}
+            onClose={() =>
+              setNotificaciones((prev) => prev.filter((x) => x.id !== n.id))
+            }
+          >
+            {n.texto}
+          </Alert>
+        ))}
+      </Stack>
+
       {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
             Subir Fotos/Videos
@@ -271,13 +294,24 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
             Seleccioná los archivos del evento y completá la información
           </Typography>
         </Box>
-        <Chip
-          icon={hayInternet ? <Wifi /> : <WifiOff />}
-          label={hayInternet ? "Conectado" : "Sin conexión"}
-          color={hayInternet ? "success" : "error"}
-          variant="outlined"
-          size="small"
-        />
+        <Stack direction="row" spacing={1} alignItems="center">
+          {subidasEnCurso > 0 && (
+            <Chip
+              icon={<CircularProgress size={14} />}
+              label={`${subidasEnCurso} subida(s) en curso`}
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+          )}
+          <Chip
+            icon={hayInternet ? <Wifi /> : <WifiOff />}
+            label={hayInternet ? "Conectado" : "Sin conexión"}
+            color={hayInternet ? "success" : "error"}
+            variant="outlined"
+            size="small"
+          />
+        </Stack>
       </Box>
 
       {mensaje && (
@@ -372,7 +406,7 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
         )}
 
         {/* Formulario principal */}
-        <Paper sx={{ p: 3, flex: 1 }}>
+        <Paper sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Área</InputLabel>
             <Select
@@ -475,35 +509,12 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
                 </List>
               </Box>
 
-              {subiendo && (
-                <Box sx={{ mb: 2 }}>
-                  <LinearProgress variant="determinate" value={progreso} />
-                  <Typography
-                    variant="caption"
-                    align="center"
-                    display="block"
-                    sx={{ mt: 0.5, color: "text.secondary" }}
-                  >
-                    {progreso}%
-                  </Typography>
-                </Box>
-              )}
-
               <Button
                 variant="contained"
                 color={hayInternet ? "primary" : "warning"}
-                startIcon={
-                  subiendo ? (
-                    <CircularProgress size={18} color="inherit" />
-                  ) : hayInternet ? (
-                    <Send />
-                  ) : (
-                    <CloudOff />
-                  )
-                }
+                startIcon={hayInternet ? <Send /> : <CloudOff />}
                 onClick={hayInternet ? subirNormal : guardarLocal}
                 disabled={
-                  subiendo ||
                   !area ||
                   !descripcion.trim() ||
                   archivos.length === 0
@@ -512,13 +523,9 @@ const Subir = ({ onSubidaExitosa, actualizarContador }) => {
                 size="large"
                 sx={{ py: 1.5 }}
               >
-                {subiendo
-                  ? hayInternet
-                    ? `Subiendo... ${progreso}%`
-                    : "Guardando..."
-                  : hayInternet
-                    ? "Subir al servidor"
-                    : "Guardar localmente"}
+                {hayInternet
+                  ? "Subir al servidor"
+                  : "Guardar localmente"}
               </Button>
             </>
           )}

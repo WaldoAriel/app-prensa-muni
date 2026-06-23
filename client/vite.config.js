@@ -12,7 +12,7 @@ export default defineConfig({
         name: 'Prensa Municipal',
         short_name: 'Prensa',
         description: 'Sistema de Gestión de Medios',
-        theme_color: '#1B3A5C',
+        theme_color: '#FF7204',
         background_color: '#F0F2F5',
         display: 'standalone',
         orientation: 'portrait',
@@ -56,6 +56,7 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
+    allowedHosts: true,
     port: 5173,
     proxy: {
       '/api': {

@@ -53,7 +53,6 @@ const Galeria = () => {
     const labels = {
       todas: "Todas",
       obras_publicas: "Obras públicas",
-      obras_privadas: "Obras privadas",
       dispo: "DISPO",
       turismo_cultura_y_deportes: "Turismo cultura y deportes",
       intendencia: "Intendencia",
@@ -61,6 +60,7 @@ const Galeria = () => {
       educacion: "Educación",
       desarrollo_social: "Desarrollo social",
       zoonosis: "Zoonosis",
+      otros: "Otros",
     };
     return labels[area] || area.charAt(0).toUpperCase() + area.slice(1);
   };
@@ -68,7 +68,6 @@ const Galeria = () => {
   const areas = [
     "todas",
     "obras_publicas",
-    "obras_privadas",
     "dispo",
     "turismo_cultura_y_deportes",
     "intendencia",
@@ -76,6 +75,7 @@ const Galeria = () => {
     "educacion",
     "desarrollo_social",
     "zoonosis",
+    "otros",
   ];
   const meses = [
     "todos",
@@ -183,6 +183,8 @@ const Galeria = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 1,
         }}
       >
         <Box>
@@ -216,7 +218,7 @@ const Galeria = () => {
           spacing={2}
           alignItems={{ sm: "center" }}
         >
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ width: "100%" }}>
             <InputLabel>Área</InputLabel>
             <Select
               value={filtroArea}
@@ -231,7 +233,7 @@ const Galeria = () => {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ width: "100%" }}>
             <InputLabel>Mes</InputLabel>
             <Select
               value={filtroMes}
@@ -256,7 +258,7 @@ const Galeria = () => {
                 );
               }}
               slotProps={{
-                textField: { size: "small", sx: { minWidth: 160 } },
+                textField: { size: "small", sx: { width: "100%" } },
               }}
             />
           </LocalizationProvider>
@@ -270,7 +272,7 @@ const Galeria = () => {
             InputProps={{
               startAdornment: <Search fontSize="small" sx={{ mr: 0.5 }} />,
             }}
-            sx={{ minWidth: 200 }}
+            sx={{ width: "100%" }}
           />
 
           {hayFiltrosActivos && (
@@ -291,7 +293,7 @@ const Galeria = () => {
       {galeriaFiltrada.length === 0 ? (
         <Paper
           sx={{
-            p: 6,
+            p: { xs: 4, sm: 6 },
             textAlign: "center",
             bgcolor: "grey.50",
           }}
@@ -328,7 +330,7 @@ const Galeria = () => {
                     transition: "all 0.2s ease",
                     "&:hover": {
                       borderColor: "primary.main",
-                      boxShadow: "0 4px 16px rgba(27,58,92,0.12)",
+                      boxShadow: "0 4px 16px rgba(255,114,4,0.12)",
                       transform: "translateY(-2px)",
                     },
                   }}
@@ -340,7 +342,7 @@ const Galeria = () => {
                         src={ruta}
                         style={{
                           width: "100%",
-                          height: 140,
+                          height: 120,
                           objectFit: "cover",
                           display: "block",
                         }}
@@ -353,7 +355,7 @@ const Galeria = () => {
                       alt={nombreArchivo}
                       style={{
                         width: "100%",
-                        height: 140,
+                        height: 120,
                         objectFit: "cover",
                         display: "block",
                       }}

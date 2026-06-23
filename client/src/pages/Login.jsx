@@ -11,12 +11,20 @@ import {
   CircularProgress,
   Avatar,
   Divider,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
-import { CameraAlt, Login as LoginIcon } from "@mui/icons-material";
+import {
+  CameraAlt,
+  Login as LoginIcon,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const { login } = useAuth();
@@ -63,7 +71,7 @@ const Login = () => {
           sx={{
             bgcolor: "primary.dark",
             color: "white",
-            py: 4,
+            py: { xs: 3, sm: 4 },
             textAlign: "center",
           }}
         >
@@ -87,7 +95,7 @@ const Login = () => {
         </Box>
 
         {/* Form */}
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Typography
             variant="h6"
             sx={{ mb: 0.5, fontWeight: 600, color: "text.primary" }}
@@ -114,12 +122,27 @@ const Login = () => {
             <TextField
               fullWidth
               label="Contraseña"
-              type="password"
+              type={showPassword ? "text" : "password"}
               margin="normal"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               size="medium"
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
 
             {error && (

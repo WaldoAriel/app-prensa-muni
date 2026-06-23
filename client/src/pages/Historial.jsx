@@ -46,7 +46,6 @@ const Historial = () => {
   const areas = [
     "todas",
     "Obras públicas",
-    "Obras privadas",
     "DISPO",
     "Turismo cultura y deportes",
     "Intendencia",
@@ -54,6 +53,7 @@ const Historial = () => {
     "Educación",
     "Desarrollo social",
     "Zoonosis",
+    "Otros",
   ];
 
   const cargarHistorial = async () => {
@@ -168,7 +168,7 @@ const Historial = () => {
           spacing={2}
           alignItems={{ sm: "center" }}
         >
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ width: "100%" }}>
             <InputLabel>Área</InputLabel>
             <Select
               value={filtroArea}
@@ -183,7 +183,7 @@ const Historial = () => {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 140 }}>
+          <FormControl size="small" sx={{ width: "100%" }}>
             <InputLabel>Usuario</InputLabel>
             <Select
               value={filtroUsuario}
@@ -204,7 +204,7 @@ const Historial = () => {
       {subidasFiltradas.length === 0 ? (
         <Paper
           sx={{
-            p: 6,
+            p: { xs: 4, sm: 6 },
             textAlign: "center",
             bgcolor: "grey.50",
           }}
@@ -307,7 +307,7 @@ const Historial = () => {
       ) : (
         <Paper>
           <Box sx={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", minWidth: 700, borderCollapse: "collapse" }}>
               <thead>
                 <tr>
                   <th style={{ textAlign: "left", padding: "12px 16px" }}>Fecha</th>
